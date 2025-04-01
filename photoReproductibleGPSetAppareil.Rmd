@@ -171,6 +171,7 @@ meta$FileModifyDate
 meta$FileAccessDate
 meta$SourceFile
 #install_exiftool()
+write.csv(meta1,"data\meta1.csv", fileEncoding = "UTF-8")
 ```
 
 
