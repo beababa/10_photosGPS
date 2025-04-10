@@ -17,6 +17,9 @@ knitr::opts_chunk$set(cache = TRUE)
 # Passer la valeur suivante à TRUE pour reproduire les extractions.
 knitr::opts_chunk$set(eval = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
+options(rgl.useNULL = TRUE) # Suppress the separate window.
+rgl::setupKnitr(autoprint = TRUE)
+
 ```
 
 
@@ -54,20 +57,23 @@ library(leafpop)
 library(sf)
 library(mapsf)
 #library(tibble)
-library(ggplot2)
+#library(ggplot2)
 library(leaflet)
 library(leafpop)
 library(lubridate)
 library(purrr)
 library(readr)
-library(sf)
 library(mapsf)
 library(tibble)
 library(tidyr)
 library(exiftoolr) # metadonnées photo
 library(magick) # pour la taille
-library(mapview)
-library(ggthemes)
+#library(mapview)
+#library(ggthemes)
+library(lidR)
+library(rgl)
+library(terra)
+library(htmlwidgets)
 ```
 
 
@@ -193,7 +199,7 @@ meta$FileAccessDate
 meta$SourceFile
 ```
 
-
+meta <- read_csv("data/gros/meta.csv")
 mais date sur le modify date. il faut sauvegarder nom photo et modify date
 
 
@@ -254,6 +260,7 @@ calcul différence entre les 2 dates
 A priori 1e photo 1er pt (mais verif à faire)
 
 ```{r}
+trace <- trace[order(trace$time), ]
 trace [1, c("name", "time")]
 trace$time
 photoMeta [1,]
@@ -352,7 +359,7 @@ Enregistrement
 
 ```{r}
 names(joint)
-st_write(joint[, c("name", "nom", "FileModifyDate", "heure")], 
+st_write(joint[, c("name","nom", "FileModifyDate", "heure")], 
          "C:/Users/aluisribeiro/10_photosGPS/data/arbres2025.gpkg", 
          "photo_MAR2025", 
          delete_layer = TRUE)
@@ -400,4 +407,96 @@ data <- st_jitter(data)
 mf_map(data)
 st_write(data, "C:/Users/aluisribeiro/10_photosGPS/data/arbres2025.gpkg", "photo_MAR2025", delete_layer = TRUE)
 ```
+
+# -------------------------------------LIDAR---------------------------------------------------------
+
+```{r, eval=TRUE}
+zone <- st_read("data/zone.gpkg")
+mapview(zone)
+zone <- st_transform(zone, 2154)
+```
+
+```{r}
+lasf <- dir("data/gros", "*.laz")
+for (f in lasf) {
+  las <- readLAS(paste0("data/gros/",f), select = "xyz")
+  sel <- clip_roi(las, zone)
+  writeLAS(sel, paste0( "data/",f,".las"))
+}
+```
+
+```{r}
+lasf <- dir("data/", "*.las")
+sel <- readLAS(paste0("data/", lasf [1]))
+sel1 <- readLAS(paste0("data/", lasf [2]))
+tot <- rbind(sel, sel1)
+writeLAS(tot, "data/gros/tot.las")
+```
+
+```{r}
+tot <- readLAS("data/gros/tot.las")
+# tous les points
+df <- payload(tot)
+table(df$Classification)
+```
+
+## vue 2d
+
+```{r, eval=FALSE}
+ggplot(payload(tot), aes(X,Z, color = Z)) + 
+  geom_point(size = 0.5) + 
+  coord_equal() + 
+  theme_minimal() +
+  scale_color_gradientn(colours = height.colors(50))
+```
+
+```{r,  eval=TRUE}
+tot <- readLAS("data/gros/tot.las")
+plot(tot, bg="white")
+rglwidget()
+```
+
+widget <- rglwidget()
+saveWidget(widget, file = "Lidar.html")
+
+# Modèle numérique de canopée
+
+On va au plus simple, mais il y a des subtilités par rapport aux données NODATA
+
+```{r, eval=TRUE}
+tot <- readLAS("data/gros/tot.las")
+chm <- rasterize_canopy(tot, res=1, p2r())
+writeRaster(chm, "data/chm.tif", overwrite=TRUE)
+```
+
+```{r}
+f <- function (x) { x * 0.05 + 2}
+ws_args <- list(x ="Z")
+ml <- locate_trees(tot, lmf(hmin = 12, f, ws_args = ws_args, shape = "circular"))
+```
+
+```{r}
+plot(chm)
+plot(ml$geometry, add = T)
+```
+
+
+points voisins : diametre 7 m semble convenir
+
+```{r, eval=TRUE}
+tot <- readLAS("data/gros/tot.las")
+chm <- rasterize_canopy(tot, res=1, p2r())
+ml <- locate_trees(tot, lmf(ws = 7))
+plot(chm)
+plot(ml$geometry, add = T)
+```
+
+```{r, eval=TRUE}
+x <- plot(tot, bf="white", size = 4)
+add_treetops3d(x, ml)
+rglwidget()
+```
+
+
+
 
