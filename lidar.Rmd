@@ -20,6 +20,7 @@ knitr::opts_chunk$set(warning = FALSE)
 # pour la 3d du markdown
 options(rgl.useNULL = TRUE) # Suppress the separate window.
 library(rgl)
+rgl::setupKnitr(autoprint = TRUE)
 ```
 
 
@@ -77,12 +78,6 @@ et on modifie le gitignore pour les exclure
 
 Récupération des formes pour couper
 
-```{r, eval=TRUE}
-zone <- st_read("data/zone.gpkg")
-mapview(zone)
-zone <- st_transform(zone, 2154)
-```
-
 
 # Extraction mare à la veuve
 
@@ -96,7 +91,7 @@ for (f in lasf) {
 ```
 
 
-
+concatener les fichiers
 
 ```{r}
 lasf <- dir("data/", "*.las")
@@ -118,6 +113,8 @@ tot <- readLAS("data/gros/tot.las")
 df <- payload(tot)
 table(df$Classification)
 ```
+
+Revoir la classification ?
 
 ## vue 2d
 
@@ -142,7 +139,6 @@ tot <- readLAS("data/gros/tot.las")
 plot(tot, bg="white")
 rglwidget()
 ```
-
 
 
 # Modèle numérique de canopée
@@ -178,10 +174,8 @@ chm <- rasterize_canopy(tot, res=1, p2r())
 ml <- locate_trees(tot, lmf(ws = 7))
 plot(chm)
 plot(ml$geometry, add = T)
-```
-
-```{r, eval=TRUE}
-x <- plot(tot, bf="white", size = 4)
+# graphique
+x <- plot(tot, bg="white", size = 4)
 add_treetops3d(x, ml)
 rglwidget()
 ```
@@ -193,10 +187,13 @@ permet d'obtenir les arbres individuels
 
 
 ```{r, eval=TRUE}
+tot <- readLAS("data/gros/tot.las")
+chm <- rasterize_canopy(tot, res=1, p2r())
+ml <- locate_trees(tot, lmf(ws = 7))
 algo <- dalponte2016(chm, ml)
 las <- segment_trees(tot, algo) # segment point cloud
 plot(las, bg = "white", size = 4, color = "treeID") # visualize trees
-rglwidget()
+#rglwidget()
 ```
 
 
@@ -206,6 +203,6 @@ arbre individuel
 ```{r, eval=TRUE}
 tree110 <- filter_poi(las, treeID == 110)
 plot(tree110, size = 8, bg = "white")
-rglwidget()
 ```
+
 
