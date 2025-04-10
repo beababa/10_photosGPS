@@ -50,7 +50,8 @@ library(lidR)
 library(rgl)# pour visu 3d
 library(mapsf)
 library(leaflet)
-library(mapview)
+library(terra)
+#library(mapview)
 ```
 
 ## Ressources
@@ -91,9 +92,19 @@ for (f in lasf) {
 ```
 
 
+```{r}
+set.seed(1919)
+x1 <- rnorm(1000)
+y1 <- x1 + rnorm(1000)
+base::plot(x1, y1) 
+```
+
+
+
 concatener les fichiers
 
 ```{r}
+
 lasf <- dir("data/", "*.las")
 sel <- readLAS(paste0("data/", lasf [1]))
 sel1 <- readLAS(paste0("data/", lasf [2]))
@@ -147,9 +158,10 @@ On va au plus simple, mais il y a des subtilités par rapport aux données NODAT
 
 ```{r, eval=TRUE}
 tot <- readLAS("data/gros/tot.las")
-library(terra)
 chm <- rasterize_canopy(tot, res=1, p2r())
-plot (chm)
+# quelle est la libraie qui fait le plot ? cmd find("plot")
+lidR::plot (chm)
+terra::plot(chm)
 writeRaster(chm, "data/chm.tif", overwrite=TRUE)
 ```
 
@@ -162,6 +174,10 @@ on applique un lmf local maximum filter
 f <- function (x) { x * 0.05 + 2}
 ws_args <- list(x ="Z")
 ml <- locate_trees(tot, lmf(hmin = 12, f, ws_args = ws_args, shape = "circular"))
+```
+
+
+```{r}
 plot(chm)
 plot(ml$geometry, add = T)
 ```

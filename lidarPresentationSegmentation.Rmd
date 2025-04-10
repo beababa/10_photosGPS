@@ -1,0 +1,63 @@
+---
+title: "Lidar présentation"
+author: "B. Maranget"
+date: "09/04/2025"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(cache = TRUE)
+# Passer la valeur suivante à TRUE pour reproduire les extractions.
+knitr::opts_chunk$set(eval = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+# pour la 3d du markdown
+options(rgl.useNULL = TRUE) # Suppress the separate window.
+library(rgl)
+rgl::setupKnitr(autoprint = TRUE)
+```
+
+
+
+
+# Objet
+
+Présenter les données 3D sur le parc de la mare à la veuve Honorine de Beauvais.
+
+Partie segmentation, permet d'obtenir les arbres individuels.
+
+
+# L'ensemble
+
+```{r, eval=TRUE}
+tot <- readLAS("data/gros/tot.las")
+chm <- rasterize_canopy(tot, res=1, p2r())
+ml <- locate_trees(tot, lmf(ws = 7))
+algo <- dalponte2016(chm, ml)
+las <- segment_trees(tot, algo) # segment point cloud
+plot(las, bg = "white", size = 4, color = "treeID") # visualize trees
+rglwidget()
+```
+
+
+# Un arbre à l'unité
+
+```{r, eval=TRUE}
+# arbre individuel
+tot <- readLAS("data/gros/tot.las")
+chm <- rasterize_canopy(tot, res=1, p2r())
+ml <- locate_trees(tot, lmf(ws = 7))
+algo <- dalponte2016(chm, ml)
+las <- segment_trees(tot, algo) 
+tree110 <- filter_poi(las, treeID == 110)
+plot(tree110, size = 8, bg = "white")
+rglwidget()
+```
+
+

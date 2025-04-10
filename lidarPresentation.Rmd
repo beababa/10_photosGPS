@@ -36,14 +36,14 @@ Présenter les données 3D sur le parc de la mare à la veuve Honorine de Beauva
 ## Librairies
 
 
-```{r , eval=TRUE}
+```{r , eval=TRUE, message=FALSE}
 library(sf)
 library(lidR)
 library(rgl)# pour visu 3d
-library(mapsf)
-library(leaflet)
-library(mapview)
-library(ggplot2)
+#library(mapsf)
+#library(leaflet)
+#library(mapview)
+#library(ggplot2)
 library(terra)
 ```
 
@@ -106,36 +106,3 @@ add_treetops3d(x, ml)
 rglwidget()
 ```
 
-# segmentation
-
-
-permet d'obtenir les arbres individuels
-
-
-```{r, eval=FALSE}
-tot <- readLAS("data/gros/tot.las")
-chm <- rasterize_canopy(tot, res=1, p2r())
-ml <- locate_trees(tot, lmf(ws = 7))
-algo <- dalponte2016(chm, ml)
-las <- segment_trees(tot, algo) # segment point cloud
-plot(las, bg = "white", size = 4, color = "treeID") # visualize trees
-#rglwidget()
-```
-
-![](img/segmentation.png)
-
-
-```{r, eval=FALSE}
-# arbre individuel
-tot <- readLAS("data/gros/tot.las")
-chm <- rasterize_canopy(tot, res=1, p2r())
-ml <- locate_trees(tot, lmf(ws = 7))
-algo <- dalponte2016(chm, ml)
-las <- segment_trees(tot, algo) 
-tree110 <- filter_poi(las, treeID == 110)
-plot(tree110, size = 8, bg = "white")
-rglwidget()
-```
-
-
-![](img/arbreSeul.png)
